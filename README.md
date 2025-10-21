@@ -1,4 +1,4 @@
-# Stormwater Intelligence Program
+# Stormwater Intelligence Program-Prototype 
 
 > **AI-Powered 3D Storm Simulation Platform for Emergency Management**
 
@@ -179,7 +179,8 @@ npm run dev
 
 ---
 
-## Usage
+## DEMO
+- https://stormwater-intelligence.replit.app/
 
 ### Basic Storm Query
 ```typescript

@@ -1,0 +1,666 @@
+<!--
+// --- ARCSEC PROTOCOL GOVERNANCE BLOCK ---
+// Autonomous Record, Credential, Security, and Enforcement Control
+// Master Credentials Confirmation ID: STORM CONSOLE DG PRIMARY
+// SHA-256 Hash: ARCSEC_MASTER_PROTOCOL_2025_01_20
+// Date: 2025-01-20
+// Creator / Author / Owner: Daniel Guzman
+// GitHub Username: dguzman9688678
+// Status: DIGITALLY NOTARIZED & SEALED
+// This file contains the complete, self-contained application logic for the
+// STORM-GPT NEURAL PROCESSING ENGINE, ready for GitHub hosting.
+// --- END ARCSEC BLOCK ---
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STORM-GPT ARCSEC Integration</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load React and ReactDOM (Development versions for easier debugging) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+    <!-- Load Babel for JSX and modern JS conversion -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Custom Keyframes for Visualization Pulses */
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 30s linear infinite;
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .animate-wiggle {
+            animation: wiggle 3s ease-in-out infinite alternate;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+// --- ARCSEC PROTOCOL GOVERNANCE BLOCK ---
+// Autonomous Record, Credential, Security, and Enforcement Control
+// Master Credentials Confirmation ID: STORM CONSOLE DG PRIMARY
+// SHA-256 Hash: ARCSEC_MASTER_PROTOCOL_2025_01_20
+// Date: 2025-01-20
+// Creator / Author / Owner: Daniel Guzman
+// GitHub Username: dguzman9688678
+// Status: DIGITALLY NOTARIZED & SEALED
+// --- END ARCSEC BLOCK ---
+import React, { useState, useEffect, useCallback } from 'react';
+import { Layers, Cpu, CloudDrizzle, FileText, Lock, BarChart2, CheckSquare, Server, Zap, Globe, User, AlertTriangle, CheckCircle, Clock, RefreshCw, Loader, ExternalLink, Mail, Search } from 'lucide-react';
+
+// --- START: MOCK DATABASE AND AUTH LOGIC ---
+const generateMockUserId = () => {
+  // Generates a 36-character mock UUID for integrity check testing
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
+// --- GEMINI API INTEGRATION HOOK ---
+const useGeminiQuery = () => {
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sources, setSources] = useState([]);
+
+  const executeQuery = useCallback(async (systemPrompt, userQuery, useSearch = false) => {
+    setLoading(true);
+    setResult('');
+    setSources([]);
+
+    // --- GEMINI API CONSTANTS (Gemini-2.5-Flash-Preview for text and grounding) ---
+    const modelName = "gemini-2.5-flash-preview-09-2025";
+    const apiKey = "" // Required empty string for Canvas
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        // Use Google Search tool for grounded responses (Layer 4/RAG enhancement)
+        ...(useSearch && { tools: [{ "google_search": {} }] }),
+    };
+
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                // Throw an error to trigger retry logic, handled below
+                throw new Error(`API returned status ${response.status}`);
+            }
+
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+
+            if (candidate && candidate.content?.parts?.[0]?.text) {
+                const text = candidate.content.parts[0].text;
+                setResult(text);
+
+                // Extract grounding sources if available
+                let fetchedSources = [];
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    fetchedSources = groundingMetadata.groundingAttributions
+                        .map(attribution => ({
+                            uri: attribution.web?.uri,
+                            title: attribution.web?.title,
+                        }))
+                        .filter(source => source.uri && source.title);
+                    setSources(fetchedSources);
+                }
+                setLoading(false);
+                return; // Success, exit function
+            }
+            // If response is ok but content is empty, treat as a soft error and retry
+            throw new Error("API response content was empty.");
+
+        } catch (error) {
+            attempts++;
+            if (attempts < maxAttempts) {
+                const delay = Math.pow(2, attempts) * 1000; // Exponential backoff: 2s, 4s
+                console.error(`Gemini API attempt ${attempts} failed, retrying in ${delay / 1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+                setResult("Error: Failed to fetch response from Gemini API after multiple retries.");
+                setLoading(false);
+                return; // Max attempts reached, exit function
+            }
+        }
+    }
+  }, []);
+
+  return { result, loading, sources, executeQuery };
+};
+
+// --- MOCK REPORT/API SIMULATION (FINALIZED LOGIC) ---
+const REPORT_API_URL = 'https://api.stormgpt-compliance.net/v3/report/sealed-status';
+const AUTO_REFRESH_INTERVAL_MS = 30000; // 30 seconds
+
+// Simulates fetching the final sealed report status from the internal REST API
+const fetchLiveReportStatus = async () => {
+  // Simulate network latency (0.5 to 1.5 seconds)
+  await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500)); 
+  
+  // FINALIZED LOGIC: Success requires low risk (<= 2) AND status === 'SUCCESS' (implying cryptographic seal passed).
+  const randomValue = Math.random();
+  let status = 'FAILURE';
+  let riskScore = 4;
+  
+  // 30% chance of full SUCCESS (low risk + sealed)
+  if (randomValue > 0.70) { 
+    status = 'SUCCESS';
+    riskScore = Math.floor(Math.random() * 2) + 1; // 1 or 2 (Low Risk)
+  // 40% chance of sealed but high risk (seal passed, but environmental data is bad)
+  } else if (randomValue > 0.30) {
+    status = 'SUCCESS';
+    riskScore = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5 (High Risk, but seal valid)
+  // 30% chance of total FAILURE (high risk + seal rejected or error)
+  } else {
+    status = 'FAILURE';
+    riskScore = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+  }
+
+  // Final condition evaluation: Only Low Risk (<= 2) AND Sealed is full success
+  const finalStatus = (status === 'SUCCESS' && riskScore <= 2) ? 'SUCCESS' : 'FAILURE';
+  
+  return {
+    status: finalStatus,
+    reportHash: status === 'SUCCESS' ? `SHA256:${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}` : 'SHA256:REJECTED_BAD_SEAL_D0B1',
+    riskScore: riskScore,
+    femaOverlayStatus: 'Loaded & Verified',
+    timestamp: new Date().toISOString(),
+  };
+};
+
+// Definitions now include detailed Summary of Role, Connection Hand-off Protocol, and formal Data Contracts
+const layerDefinitions = [
+  {
+    id: 1,
+    title: "1. FEATURE EXTRACTION LAYER",
+    bgColor: "from-blue-600 to-blue-800",
+    ringColor: "ring-blue-500",
+    icon: CloudDrizzle,
+    description: "Receives normalized environmental, hydrologic, and regulatory data. Encodes spatiotemporal features and correlations.",
+    summary: "The initial data intake and cleanup. It transforms raw sensor readings and financial entries into **normalized**, machine-readable vectors, encoding time and location references. **CRITICALLY: Integrates raw USGS NWIS and EPA WQP data for initial feature creation.**",
+    handoff: "Normalized, pre-processed vector embeddings and spatiotemporal correlations to the **Environmental Context Layer**.",
+    inputs: "Raw Sensor Readings (JSON/CSV), Permit Text (PDF/DOCX), **USGS NWIS API (Time-Series, Site Metadata), EPA Water Quality Portal (WQP) Data** . Internal Endpoint: `/ingest/rawdata`.",
+    outputs: "Normalized Feature Vector [1024D], Spatiotemporal Index [Time-Series/GeoJSON], Sanitization Report.",
+  },
+  {
+    id: 2,
+    title: "2. ENVIRONMENTAL CONTEXT LAYER",
+    bgColor: "from-green-600 to-green-800",
+    ringColor: "ring-green-500",
+    icon: Layers,
+    description: "Integrates meteorological, hydrological, and compliance context.",
+    summary: "The integration bridge. It takes the normalized data and enriches it by making API calls (Actions) to pull in **real-time meteorological, hydrological (flow/stage data), and general compliance context** data. **CRITICALLY: Integrates FEMA, NASA, USGS, and NOAA/EPA Geospatial and Core Data feeds.**",
+    handoff: "The enriched data set, complete with external real-time variables, to the **Analytic Core**.",
+    inputs: "Normalized Feature Vectors, **FEMA/NASA/USGS/NOAA API Keys**. Internal Endpoint: `/analyze/environment`. **EPA EnviroAtlas/GeoPlatform Services**.",
+    outputs: "Enriched Data Object { Normalized_Feature_Vector, RealTime_QPE_Inputs, Hydrology_Flags, Compliance_Context_Tags, FEMA_Zone_ID, Hazard_Level, NASA_Cloud_Cover_Data }",
+  },
+  {
+    id: 3,
+    title: "3. ANALYTIC CORE (STORM-GPT LLM)",
+    bgColor: "from-purple-600 to-purple-800",
+    ringColor: "ring-purple-500",
+    icon: Cpu,
+    description: "Performs QPE simulations, flow predictions, and pollutant analysis.",
+    summary: "The central processing engine. It utilizes the LLM's computational power to run **QPE (Quantitative Precipitation Estimation) simulations**, predict flow rates, and calculate **pollutant concentrations (TSS/pH)** based on the enriched data. **CRITICALLY: Uses FEMA Risk Modeling and USGS/EPA data for flood and loss estimates.**",
+    handoff: "The calculated outcomes (predictions and analysis values) to the **Regulatory Reasoning Layer**.",
+    inputs: "Enriched Data Object. **FEMA Risk & Modeling Data (HAZUS-MH), USGS Hydrography/StreamStats Data**. Internal Endpoint: `/forecast/stormwater`.",
+    outputs: "Computed Metrics {QPE_Value (mm/hr), Predicted_Flow_Rate (cfs), Pollutant_Concentration (mg/L - TSS/pH), FEMA_Loss_Estimate (USD), Statistical_Variance_Report}.",
+  },
+  {
+    id: 4,
+    title: "4. REGULATORY REASONING LAYER",
+    bgColor: "from-lime-600 to-lime-800",
+    ringColor: "ring-lime-500",
+    icon: FileText,
+    description: "Maps computed outcomes to CWA, CGP, and NPDES compliance criteria (RAG).",
+    summary: "The core compliance engine (RAG). It performs **Retrieval-Augmented Generation (RAG)** by matching the calculated outcomes from the Analytic Core against the content of your uploaded **CWA, CGP, and NPDES documents**. **CRITICALLY: Pulls regulatory data from EPA ECHO and GHCND/GHCN daily stations (NOAA).**",
+    handoff: "The specific text snippets and verified citations (the *reasoning*) that map the outcome directly to a violation or compliant status to the **Decision Layer**.",
+    inputs: "Computed Metrics, RAG Knowledge Base (Vector Store, N=40M tokens), **NOAA GHCND/EPA ECHO Data (Discharge/Facility)**. Internal Endpoint: `/ingest/noaa`.",
+    outputs: "Compliance Verdict (Boolean), Citation Index ID [NPDES-2.1.b], Source Document Hash (Verified SHA-256), RAG Retrieval Log.",
+  },
+  {
+    id: 5,
+    title: "5. DECISION LAYER",
+    bgColor: "from-orange-600 to-orange-800",
+    ringColor: "ring-orange-500",
+    icon: CheckSquare,
+    description: "Generates risk assessments, compliance verdicts, and corrective actions.",
+    summary: "The verdict generator. Based on the reasoning from Layer 4, it drafts the final, formal output: a **compliance verdict**, a quantifiable **risk assessment**, and the necessary **corrective action codes**.",
+    handoff: "The final structured decision payload (including the corrective action and source document hash) to the **ARCSEC Security Layer** for verification.",
+    inputs: "Compliance Verdict, Citation Index ID, Risk Model Parameters (Severity/Likelihood).",
+    outputs: "Action Payload { Risk_Score [1-5], Corrective_Action_Code, Draft_Report_Text (Markdown), Pre-Seal_Metadata (JSON).}",
+  },
+  {
+    id: 6,
+    title: "6. ARCSEC SECURITY LAYER",
+    bgColor: "from-red-600 to-red-800",
+    ringColor: "ring-red-500",
+    icon: Lock,
+    description: "Applies cryptographic sealing, signature verification, and audit logging.",
+    summary: "The integrity guarantor. This layer executes a critical, non-LLM function, applying **cryptographic sealing and signature verification** to the Decision Layer's output, and writing an immutable **audit log**. **CRITICALLY: Leverages internal ARCSEC endpoints for key management and ledger appending.**",
+    handoff: "The final, cryptographically signed and sealed compliance verdict record to the **Output Layer**.",
+    inputs: "Action Payload, Private Signing Key/Certificates (PKI), Immutable Ledger API Endpoint, Audit Log Template. Internal Endpoints: `/identity/verify`, `/seal/archive`.",
+    outputs: "Cryptographically Sealed Artifact (JWS/Signed XML), Immutable Audit Log Record (Blockchain Hash), Tamper-Proof Signature.",
+  },
+  {
+    id: 7,
+    title: "7. OUTPUT LAYER",
+    bgColor: "from-cyan-600 to-cyan-800",
+    ringColor: "ring-cyan-500",
+    icon: BarChart2,
+    description: "Feeds verified data to Cesium visualization and external reports.",
+    summary: "The final delivery mechanism. It takes the verified, sealed data record and formats it for visualization in external tools like **Cesium** (for geospatial mapping) and generates formal, external reports. **CRITICALLY: Pushes the verified artifact to the CesiumViewer.tsx component via a secured WebSocket connection.**",
+    handoff: "**System Exit:** The verified information is delivered to end-user platforms and reporting systems.",
+    inputs: "Cryptographically Sealed Artifact, Audit Log Record, Geospatial Query Parameters. Internal Endpoint: `/cesium/upload`.",
+    outputs: "Cesium Visualization Data (3D Tileset), External Report File (XML/JSON), Final System Status (SUCCESS/FAILURE).",
+  },
+];
+
+const LayerCard = ({ layer, isActive, onClick }) => {
+  const Icon = layer.icon;
+  // Ensures full width and proper vertical stacking on mobile
+  const baseClasses = "w-full p-4 transition-all duration-300 cursor-pointer flex flex-col items-center text-white rounded-lg shadow-lg bg-gradient-to-br";
+  
+  const activeClasses = isActive 
+    ? `${layer.bgColor} ${layer.ringColor} ring-4 ring-opacity-70 transform scale-[1.03] shadow-white/50 shadow-2xl` 
+    : `${layer.bgColor} opacity-90 hover:opacity-100 hover:shadow-xl`;
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`${baseClasses} ${activeClasses} ${layer.id !== 1 ? 'mt-4' : ''}`} onClick={() => onClick(layer.id)}>
+        <Icon className="w-6 h-6 mb-2 text-white" />
+        <h3 className="font-semibold text-lg text-center tracking-wide">{layer.title}</h3>
+      </div>
+      {layer.id < 7 && (
+        <svg height="20" width="10" className="mt-1">
+          <line x1="5" y1="0" x2="5" y2="20" stroke="#4b5563" strokeWidth="2" />
+          <polygon points="5,20 1,15 9,15" style={{ fill: "#4b5563" }} />
+        </svg>
+      )}
+    </div>
+  );
+};
+
+// UPDATED Component for Cesium Visualization Mockup
+const VisualizationView = ({ selectedLayer }) => {
+  const [reportStatus, setReportStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // --- REPORT PULL LOGIC (30s refresh + initial load) ---
+  const loadStatus = async () => {
+    setLoading(true);
+    const status = await fetchLiveReportStatus();
+    setReportStatus(status);
+    setLoading(false);
+  };
+  
+  useEffect(() => {
+    loadStatus(); 
+    const intervalId = setInterval(loadStatus, AUTO_REFRESH_INTERVAL_MS);
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, []);
+  // --- END REPORT PULL LOGIC ---
+
+  let statusColor = 'text-gray-400';
+  let statusIcon = Clock;
+  let statusMessage = 'Fetching Sealed Report Status...';
+
+  if (!loading && reportStatus) {
+    // FINALIZED STATUS LOGIC: green if riskScore <= 2 AND status is 'SUCCESS'
+    if (reportStatus.status === 'SUCCESS') {
+      statusColor = 'text-green-400';
+      statusIcon = CheckCircle;
+      statusMessage = 'SYSTEM STATUS: SUCCESS — ARCSEC VERIFIED';
+    } else {
+      statusColor = 'text-red-400';
+      statusIcon = AlertTriangle;
+      statusMessage = 'SYSTEM STATUS: FAILURE — VERIFICATION REJECTED';
+    }
+  }
+
+  const StatusIcon = statusIcon;
+  
+  // FINALIZED PARAMETER: Cesium Ion Asset ID
+  const cesiumAssetId = '702025'; 
+
+  return (
+    <div className="p-8 h-full min-h-[500px] border-4 border-gray-700 bg-gray-800/70 rounded-lg backdrop-blur-md shadow-2xl flex flex-col">
+      <div className={`flex items-center space-x-4 pb-4 border-b-2 ${selectedLayer.ringColor.replace('ring-', 'border-').replace('500', '400')} mb-4`}>
+        <Globe className={`w-8 h-8 ${selectedLayer.ringColor.replace('ring-', 'text-')}`} />
+        <h2 className="text-3xl font-extrabold text-white tracking-tight">{selectedLayer.title} - CESIUM INTEGRATION POINT</h2>
+      </div>
+      
+      <div className="flex-grow bg-gray-900 border border-gray-700 rounded-lg overflow-hidden relative">
+          
+          {/* HUD OVERLAY: Fixed Banner at Top-Right */}
+          <div className={`absolute top-4 right-4 p-3 shadow-xl rounded-lg text-sm font-bold z-20 transition-all duration-500 
+              ${reportStatus?.status === 'SUCCESS' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+              <div className="flex items-center space-x-2">
+                <StatusIcon className={`w-4 h-4 text-white`} />
+                <span>{statusMessage}</span>
+                {loading && <RefreshCw className="w-4 h-4 mr-2 animate-spin ml-2 text-white/70" />}
+              </div>
+          </div>
+
+          {/* Integration Details Box (Static Context) */}
+          <div className="absolute bottom-4 left-4 text-left text-sm text-gray-400 font-mono p-4 border border-gray-700 rounded-lg bg-gray-900/90 shadow-inner z-30">
+              <p className="text-lg font-semibold mb-2 text-white">Integration Targets:</p>
+              <p><span className="text-yellow-500">Repository:</span> dguzman-stormintel/Stormwater-Intelligence-Program-</p>
+              <p><span className="text-yellow-500">Component:</span> `src/components/CesiumViewer.tsx`</p>
+              <p><span className="text-yellow-500">3D Tiles:</span> Cesium Ion Asset **#{cesiumAssetId}** (Google Photorealistic)</p>
+          </div>
+          
+          {/* Live Report Metrics Panel (Dynamic Data) */}
+          <div className="absolute top-4 right-64 p-3 w-64 border-l-4 border-yellow-500 bg-gray-900/90 rounded-lg shadow-xl text-xs text-white z-30">
+              <p className="font-bold text-yellow-300 mb-2 flex items-center">
+                  <Server className="w-4 h-4 mr-2" /> LIVE AUDIT METRICS ({REPORT_API_URL.split('/')[2]})
+              </p>
+              {reportStatus ? (
+                  <div className="space-y-1 font-mono">
+                      <p><span className="text-gray-500">Time (Audit Trace):</span> <span className="text-white break-all">{new Date(reportStatus.timestamp).toLocaleTimeString()}</span></p>
+                      <p><span className="text-gray-500">Hash (Sealed Artifact):</span> <span className="text-white break-all">{reportStatus.reportHash.substring(0, 18)}...</span></p>
+                      <p><span className="text-gray-500">Risk Score:</span> <span className={`${reportStatus.riskScore > 2 ? 'text-red-500 font-bold' : 'text-green-500'}`}>{reportStatus.riskScore} / 5</span></p>
+                      <p><span className="text-gray-500">FEMA Overlay:</span> {reportStatus.femaOverlayStatus}</p>
+                  </div>
+              ) : (
+                  <p className="text-gray-500 italic">Awaiting secure data...</p>
+              )}
+          </div>
+          
+          {/* Placeholder for 3D Imagery - Simulating Earth/Geospatial Data with Overlays */}
+          <div className="bg-gradient-to-br from-gray-950 to-gray-800 h-full w-full relative">
+              <div className="absolute inset-0 flex items-center justify-center">
+                  
+                  {/* Data Stream Orbit - PULSES GREEN/RED based on status */}
+                  <div className={`w-56 h-56 rounded-full border-4 animate-spin-slow opacity-20`} 
+                       style={{ 
+                           borderStyle: 'dashed', 
+                           borderColor: reportStatus?.status === 'SUCCESS' ? '#10B981' : '#EF4444',
+                           transition: 'border-color 0.5s'
+                       }}>
+                  </div>
+                  
+                  {/* Simulated FEMA Flood Overlay (Red Ring on Earth) */}
+                  <div className="absolute w-40 h-40 rounded-full border-4 border-red-600 opacity-40 shadow-red-500 animate-pulse delay-500"></div>
+
+                  {/* Simulated NOAA Radar Overlay (Green Patches) */}
+                  <div className="absolute w-16 h-16 rounded-full bg-green-500 opacity-60 blur-md top-16 left-12 animate-wiggle"></div>
+                  <div className="absolute w-12 h-12 rounded-full bg-green-500 opacity-60 blur-md bottom-20 right-10 animate-wiggle delay-200"></div>
+
+                  {/* Inner globe representation */}
+                  <div className="absolute w-32 h-32 rounded-full bg-cyan-700 opacity-40 shadow-xl shadow-cyan-600"></div>
+                  
+                  {/* Violation Point Indicators */}
+                  <div className="absolute w-2 h-2 bg-red-500 rounded-full top-10 left-10 animate-pulse"></div>
+                  <div className="absolute w-2 h-2 bg-yellow-400 rounded-full bottom-8 right-12 animate-pulse delay-100"></div>
+                  <div className="absolute text-2xl font-bold text-cyan-200/90 tracking-widest">ARCSEC</div>
+              </div>
+          </div>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-gray-700 text-sm text-gray-400 italic">
+          Status: HIGH-INTEGRITY LINK | Output Data Contract: {selectedLayer.outputs}
+      </div>
+    </div>
+  );
+};
+
+// Standard Audit View for non-visualization layers
+const StandardAuditView = ({ selectedLayer }) => {
+  // FIX: Destructure the icon component out of the object before using it as a tag.
+  const IconComponent = selectedLayer.icon; 
+  const { result: summaryResult, loading: summaryLoading, executeQuery: executeSummary } = useGeminiQuery();
+  const { result: drafterResult, loading: drafterLoading, executeQuery: executeDrafter, sources: drafterSources } = useGeminiQuery();
+
+  // MOCK DATA: For demonstration, use fixed content representing the Decision Layer output
+  const mockDecisionPayload = {
+      Risk_Score: 4.5,
+      Corrective_Action_Code: "CA-PMP-101 (Immediate Pumping)",
+      Draft_Report_Text: "Peak TSS predicted to exceed watershed-specific limits; corrective pumping is mandated per governing regulation.",
+  };
+
+  const handleDraftEmail = () => {
+    const systemPrompt = `You are a compliance assistant for the ARCSEC Stormwater Engine. Your role is to draft a professional, urgent email to the site manager based on the provided technical verdict. The tone must be formal and require immediate action, citing the specific code.`;
+    const userQuery = `Draft an email to Site Manager John Doe for a compliance failure. Details: Risk Score is ${mockDecisionPayload.Risk_Score}. Corrective Action Code is ${mockDecisionPayload.Corrective_Action_Code}. Mandated Text: "${mockDecisionPayload.Draft_Report_Text}". Start the email with: "Subject: URGENT: Compliance Failure Detected at Site 47 - Immediate Action Required"`;
+    executeDrafter(systemPrompt, userQuery, false);
+  };
+
+  const handleComplianceSearch = () => {
+    const systemPrompt = `You are a legal compliance specialist. Your task is to perform a Google Search to find and summarize the most recent critical regulatory change related to NPDES or CWA stormwater enforcement in the Chesapeake Bay Watershed. Provide a concise, single-paragraph summary of the update and list sources.`;
+    const userQuery = `Find the most recent critical regulatory update concerning TSS limits or Corrective Action Plan mandates for NPDES/CWA compliance in the Chesapeake Bay Watershed.`;
+    executeSummary(systemPrompt, userQuery, true);
+  };
+
+  const renderGeminiFeature = (title, onClick, loading, result, sources, icon) => (
+    <div className="bg-gray-900/50 p-4 border border-gray-700 rounded-lg shadow-inner mt-4">
+        <div className="flex items-center justify-between mb-2">
+            <h4 className="text-lg font-semibold text-white flex items-center">{icon} {title}</h4>
+            <button
+                onClick={onClick}
+                disabled={loading}
+                className={`flex items-center px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200 
+                  ${loading ? 'bg-gray-600 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+            >
+                {loading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : null}
+                {loading ? 'Processing...' : 'Run Query ✨'}
+            </button>
+        </div>
+        
+        {/* Output Display */}
+        <div className="mt-2 p-3 bg-gray-950 border border-gray-800 rounded-md min-h-[50px]">
+            {result ? (
+                <>
+                    <p className="text-gray-300 whitespace-pre-wrap">{result}</p>
+                    {sources && sources.length > 0 && (
+                        <div className="mt-2 text-xs text-gray-500">
+                            <h5 className="font-semibold text-yellow-500">Grounding Sources:</h5>
+                            {sources.map((source, index) => (
+                                <p key={index} className="truncate hover:text-yellow-400">
+                                    <ExternalLink className="inline w-3 h-3 mr-1" />
+                                    <a href={source.uri} target="_blank" rel="noopener noreferrer">{source.title}</a>
+                                </p>
+                            ))}
+                        </div>
+                    )}
+                </>
+            ) : (
+                <p className="text-gray-500 italic text-sm">Click 'Run Query ✨' to activate the Gemini LLM feature.</p>
+            )}
+        </div>
+    </div>
+  );
+
+
+  return (
+  <div className="p-8 h-full border-4 border-gray-700 bg-gray-800/70 rounded-lg backdrop-blur-md shadow-2xl overflow-y-auto">
+      <div className={`flex items-center space-x-4 pb-4 border-b-2 ${selectedLayer.ringColor.replace('ring-', 'border-').replace('500', '400')} mb-4`}>
+        {/* FIX: Use the destructured IconComponent variable */}
+        <IconComponent className={`w-8 h-8 ${selectedLayer.ringColor.replace('ring-', 'text-')}`} />
+        <h2 className="text-3xl font-extrabold text-white tracking-tight">{selectedLayer.title}</h2>
+      </div>
+      
+      {/* 1. Primary Description (Base Definition) */}
+      <div className="mb-6 p-4 border border-gray-700 bg-gray-900/50 rounded">
+        <h3 className="text-xl font-semibold mb-2 text-white/90">Layer Definition:</h3>
+        <p className="text-gray-300 text-lg font-light leading-relaxed">
+          {selectedLayer.description}
+        </p>
+      </div>
+
+      {/* --- GEMINI INTEGRATED FEATURES --- */}
+      {selectedLayer.id === 4 && renderGeminiFeature(
+        "✨ Compliance Navigator: Find Latest Regulatory Updates",
+        handleComplianceSearch,
+        summaryLoading,
+        summaryResult,
+        [], // No external sources needed for this display
+        <Search className="w-5 h-5 mr-2 text-yellow-400" />
+      )}
+
+      {selectedLayer.id === 5 && renderGeminiFeature(
+        "✨ Corrective Action Drafter: Generate Final Communication",
+        handleDraftEmail,
+        drafterLoading,
+        drafterResult,
+        drafterSources,
+        <Mail className="w-5 h-5 mr-2 text-orange-400" />
+      )}
+      {/* --- END GEMINI INTEGRATED FEATURES --- */}
+
+      {/* 2. Summary of Role (Expanded Context) */}
+      <div className="mb-6 p-4 border-l-4 border-gray-600 bg-gray-900/50">
+        <h3 className="text-xl font-semibold mb-2 text-white/90">Summary of Role:</h3>
+        <p className="text-gray-300 text-lg font-light leading-relaxed">
+          <span dangerouslySetInnerHTML={{ __html: selectedLayer.summary }} />
+        </p>
+      </div>
+
+      {/* 3. Connection / Hand-off Protocol (Traceability) */}
+      <div className="mb-6 p-4 border-l-4 border-red-500 bg-gray-900/50">
+        <h3 className="text-xl font-semibold mb-2 text-red-400">Connection / Hand-off Protocol (Next Layer):</h3>
+        <p className="text-gray-300 text-lg font-normal leading-relaxed">
+           <span dangerouslySetInnerHTML={{ __html: selectedLayer.handoff }} />
+        </p>
+      </div>
+      
+      {/* 4. Input Data Contract */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 border border-gray-600 bg-gray-900/50 rounded flex flex-col">
+          <div className="flex items-center text-yellow-400 mb-2">
+             <Server className="w-5 h-5 mr-2" />
+             <h3 className="text-lg font-semibold">Input Data Contract:</h3>
+          </div>
+          {/* Added whitespace-normal to ensure text wraps correctly on narrow screens */}
+          <p className="text-gray-300 text-base font-mono whitespace-normal break-words">
+            {selectedLayer.inputs}
+          </p>
+        </div>
+        
+        {/* 5. Output Data Contract */}
+        <div className="p-4 border border-gray-600 bg-gray-900/50 rounded flex flex-col">
+          <div className="flex items-center text-cyan-400 mb-2">
+             <Zap className="w-5 h-5 mr-2" />
+             <h3 className="text-lg font-semibold">Output Data Contract:</h3>
+          </div>
+          <p className="text-gray-300 text-base font-mono whitespace-normal break-words">
+            {selectedLayer.outputs}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 pt-4 border-t border-gray-700 text-sm text-gray-400 italic">
+        Layer ID: {selectedLayer.id} | Status: VERIFIED | Audit Level: Court-Ready
+      </div>
+    </div>
+);
+};
+
+const DetailPane = ({ selectedLayer }) => {
+  if (!selectedLayer) {
+    return (
+      <div className="p-8 min-h-[500px] flex flex-col justify-center items-center text-gray-500 bg-gray-900/90 rounded-lg shadow-inner">
+        <Layers className="w-12 h-12 mb-4 text-gray-700" />
+        <p className="text-xl font-light">Select a layer to initiate formal review.</p>
+        <p className="text-sm text-gray-600 mt-2">ARCSEC Audit Protocol Activated.</p>
+      </div>
+    );
+  }
+
+  // Conditional rendering for Layer 7 Visualization
+  if (selectedLayer.id === 7) {
+    return <VisualizationView selectedLayer={selectedLayer} />;
+  }
+
+  return <StandardAuditView selectedLayer={selectedLayer} />;
+};
+
+const App = () => {
+  const [activeLayerId, setActiveLayerId] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const selectedLayer = layerDefinitions.find(l => l.id === activeLayerId);
+
+  // --- MOCK AUTHENTICATION SYSTEM (Replaces Firebase Logic) ---
+  useEffect(() => {
+    // Generates a mock UUID to simulate successful login for ARCSEC Security Layer
+    setUserId(generateMockUserId());
+    console.log("ARCSEC Security Layer: Custom/Mock Auth System Initialized. Ready for custom database integration.");
+  }, []);
+  // --- END MOCK AUTHENTICATION SYSTEM ---
+
+  const handleLayerClick = (id) => {
+    setActiveLayerId(id === activeLayerId ? null : id);
+  };
+
+  return (
+    // Removed fixed height and let content/min-height define the vertical space
+    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-8 font-sans flex flex-col lg:flex-row lg:space-x-8">
+      
+      {/* Left Pane: Layer Navigation (Scrollable on small screens) */}
+      <div className="w-full lg:w-1/3 p-4 bg-gray-900 border border-gray-700 shadow-xl mb-8 lg:mb-0 max-h-[90vh] lg:max-h-none overflow-y-auto">
+        <header className="text-center mb-8 sticky top-0 bg-gray-900 z-20 pb-4 border-b border-gray-800">
+          <h1 className="text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-white">
+            STORM-GPT NEURAL PROCESSING ENGINE
+          </h1>
+          <p className="text-md font-medium text-gray-400 mt-1">ARCSEC StormWater V2.2 Integration Protocol</p>
+          
+          {/* User Status Display (Updated for Mock Auth) */}
+          <div className="mt-3 flex items-center justify-center space-x-2 text-sm">
+            <Lock className={`w-4 h-4 ${userId ? 'text-green-500' : 'text-gray-500'}`} />
+            <span className="text-gray-400 font-semibold">Security State:</span>
+            <span className="text-sm font-mono text-green-400 break-all">{userId ? `MOCK ID: ${userId}` : 'Initializing Mock Auth...'}</span>
+          </div>
+        </header>
+
+        <div className="space-y-0.5">
+          {layerDefinitions.map((layer) => (
+            <LayerCard
+              key={layer.id}
+              layer={layer}
+              isActive={layer.id === activeLayerId}
+              onClick={handleLayerClick}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Right Pane: Detail Viewer (Guaranteed minimum height) */}
+      <div className="w-full lg:w-2/3 p-0 min-h-[500px] lg:min-h-0">
+        <DetailPane selectedLayer={selectedLayer} />
+      </div>
+
+      <footer className="w-full mt-8 text-center text-gray-600 text-xs">
+        &copy; {new Date().getFullYear()} ARCSEC Solutions v2.2 | For Official Use Only.
+      </footer>
+    </div>
+  );
+};
+
+// Render the application to the DOM
+ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
